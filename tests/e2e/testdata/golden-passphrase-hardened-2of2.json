@@ -1,0 +1,9 @@
+{
+  "description": "2-of-2 passphrase profile at hardened Argon2id defaults (t=3, m=256MiB, p=4)",
+  "profile_name": "golden-passphrase-hardened-2of2",
+  "passphrases": {
+    "pass-1": "hardened-alpha-passphrase",
+    "pass-2": "hardened-beta-passphrase"
+  },
+  "expected_output_key": "6993220b751977c61b741d3146e42916a8b6847d9ce6920556c1142cd88cd0d2"
+}

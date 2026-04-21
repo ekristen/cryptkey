@@ -1,0 +1,29 @@
+version = 1
+name = "golden-passphrase-hardened-2of2"
+threshold = 2
+output_salt = "15f8af4c58110cc1619cf7c906e88246707fa01ce45056fd93006a8b2981c34e"
+integrity = "86bd96ee00ca0125104c84f1dfc6bc5408c051d4ddedb35c982d7254c74eb99a"
+
+[[providers]]
+  type = "passphrase"
+  id = "pass-1"
+  encrypted_share = "bb3fa1664d79a19fe12179a7825c4453749eddf0f77599e6e4e941da1517991b78d4b7ec8a3052ad961e19dda6cffc3525"
+  nonce = "315ca6c3bc487ffc2cc51340"
+  share_salt = "0f80d1bd6f0b3704230620d319ad1525af7899108f4d690b0676b5cd3c28de9c"
+  [providers.params]
+    argon_memory = "262144"
+    argon_threads = "4"
+    argon_time = "3"
+    salt = "503b32ae06e79bc9f9311bb353b55d601c3522e2d7a2524bb889299a43822985"
+
+[[providers]]
+  type = "passphrase"
+  id = "pass-2"
+  encrypted_share = "d657b676b4b260b7a32b2a445a891c706dd34ccb07aa9e7fa615fad3bc3ccdf61ecf43dbd9d74133dd25bcf62fea12686a"
+  nonce = "2a993a1b59d46884465a2d3b"
+  share_salt = "65470480014a15a3c6a107eff8cf00b940b77561fd9b57f89434da46c48efc7e"
+  [providers.params]
+    argon_memory = "262144"
+    argon_threads = "4"
+    argon_time = "3"
+    salt = "9bad0bf25b80ae4628055c4056aba36c22b095acceb40a02f750eed612352f91"

@@ -1,0 +1,9 @@
+{
+  "description": "2-of-2 passphrase profile at OWASP-floor Argon2id params (t=2, m=19MiB, p=1)",
+  "profile_name": "golden-passphrase-floor-2of2",
+  "passphrases": {
+    "pass-1": "golden-alpha-passphrase",
+    "pass-2": "golden-beta-passphrase"
+  },
+  "expected_output_key": "3220c0576251df6f295613213a096aa3e86c110dce94adeac8f1380061c5026f"
+}

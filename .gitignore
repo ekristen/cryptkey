@@ -1,0 +1,4 @@
+bin/
+dist/
+.static-deps/
+.claude/settings.local.json

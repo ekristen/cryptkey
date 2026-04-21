@@ -1,0 +1,26 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: generate-token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # ratchet:tibdex/github-app-token@v2.1.0
+        with:
+          app_id: ${{ secrets.BOT2_APP_ID }}
+          private_key: ${{ secrets.BOT2_APP_PEM }}
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # ratchet:googleapis/release-please-action@v4.4.1
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -1,0 +1,9 @@
+{
+  "description": "2-of-2 passphrase + recovery-code mix at OWASP-floor Argon2id params",
+  "profile_name": "golden-mixed-passphrase-recovery-2of2",
+  "passphrases": {
+    "pass-1": "mixed-alpha-passphrase",
+    "rec-1": "AHFAT7-UD5PM2-FJNTVR-FUKZGQ-HZBS83-G4PGE5-YV2YJ8"
+  },
+  "expected_output_key": "795034315654ac44bc535524ee2707e2165026751be7ab8559a51e5ce52dbb5c"
+}

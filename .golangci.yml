@@ -1,0 +1,119 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    # Correctness
+    - bodyclose
+    - durationcheck
+    - errcheck
+    - errorlint
+    - fatcontext
+    - gocheckcompilerdirectives
+    - govet
+    - ineffassign
+    - makezero
+    - nilerr
+    - noctx
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+
+    # Security / hygiene
+    - asasalint
+    - bidichk
+    - gosec
+    - misspell
+    - predeclared
+    - reassign
+
+    # Style / maintainability
+    - dogsled
+    - dupl
+    - funlen
+    - goconst
+    - gocritic
+    - gocyclo
+    - goprintffuncname
+    - lll
+    - nakedret
+    - nolintlint
+    - perfsprint
+    - usestdlibvars
+    - whitespace
+
+    # Modernization (Go 1.22+)
+    - copyloopvar
+    - intrange
+
+    # Tests
+    - testifylint
+    - usetesting
+  settings:
+    dupl:
+      threshold: 100
+    errorlint:
+      # errorf-ext accepts %w on a single wrap; we rely on %w extensively.
+      errorf: true
+      asserts: true
+      comparison: true
+    funlen:
+      lines: 100
+      statements: 50
+      ignore-comments: true
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    perfsprint:
+      strconcat: false  # fmt.Sprintf("%s/%s", a, b) is fine — don't force a+"/"+b
+    testifylint:
+      enable-all: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - funlen
+          - dupl
+        path: _test\.go
+      - linters:
+          - gocritic
+        path: pkg/tui/
+        text: hugeParam
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

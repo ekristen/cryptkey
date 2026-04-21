@@ -1,0 +1,69 @@
+site_name: cryptkey
+site_url: https://ekristen.github.io/cryptkey
+repo_name: ekristen/cryptkey
+repo_url: https://github.com/ekristen/cryptkey
+edit_uri: ""
+
+site_dir: public
+
+# Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    primary: blue
+    accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+
+# Plugins
+plugins:
+  - search
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - Security: security.md
+  - Profiles: profiles.md
+  - Comparison: comparison.md
+  - FAQ: faq.md
+  - Commands:
+      - init: commands/init.md
+      - derive: commands/derive.md
+      - rekey: commands/rekey.md
+      - list: commands/list.md
+      - info: commands/info.md
+  - Providers:
+      - FIDO2: providers/fido2.md
+      - Passkey: providers/passkey.md
+      - Passphrase: providers/passphrase.md
+      - PIV: providers/piv.md
+      - Recovery Code: providers/recovery.md
+      - SSH Key: providers/sshkey.md
+      - SSH Agent: providers/sshagent.md
+      - TPM: providers/tpm.md
+      - Secure Enclave (unsupported): providers/secure-enclave.md
+  - Examples:
+      - Overview: examples/index.md
+      - gocryptfs: examples/gocryptfs.md
+      - age: examples/age.md
+      - VeraCrypt: examples/veracrypt.md
+      - LUKS: examples/luks.md
+      - OpenSSL: examples/openssl.md
+      - SOPS: examples/sops.md
+  - Development:
+      - Static Builds: development/static-builds.md
+      - Release Verification: development/release-verification.md

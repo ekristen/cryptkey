@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cryptkey — Enroll Passkey</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: #0a0a0a; color: #e0e0e0;
+  }
+  .card {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 12px;
+    padding: 2.5rem; max-width: 420px; width: 90%; text-align: center;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #fff; }
+  .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
+  #status {
+    font-size: 1rem; padding: 1rem; border-radius: 8px;
+    background: #111; border: 1px solid #333; margin-bottom: 1.5rem;
+    min-height: 3rem; display: flex; align-items: center; justify-content: center;
+  }
+  #status.error { border-color: #c33; color: #f88; }
+  #status.success { border-color: #3a3; color: #8f8; }
+  button {
+    background: #2563eb; color: #fff; border: none; border-radius: 8px;
+    padding: 0.8rem 2rem; font-size: 1rem; cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #1d4ed8; }
+  button:disabled { background: #333; color: #666; cursor: not-allowed; }
+  .note { color: #666; font-size: 0.8rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>cryptkey</h1>
+  <p class="subtitle">Enroll a new passkey</p>
+  <div id="status">Ready to create passkey</div>
+  <button id="btn" onclick="enroll()">Create Passkey</button>
+  <p class="note">You can use Touch ID, Face ID, a security key,<br>or your phone via QR code.</p>
+</div>
+<script>
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2)
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  return bytes;
+}
+
+function bytesToHex(buf) {
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function postJSON(url, body, csrfToken) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify(body),
+  });
+}
+
+async function enroll() {
+  const btn = document.getElementById('btn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.className = '';
+  status.textContent = 'Fetching options...';
+
+  try {
+    const optsRes = await fetch('/api/enroll-options');
+    const opts = await optsRes.json();
+    const csrfToken = opts.csrfToken;
+
+    status.textContent = 'Waiting for passkey creation...';
+
+    // Step 1: Create credential with prf: {} (empty) to check support.
+    // Per Yubico guide, create() only returns prf.enabled, not the actual value.
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: hexToBytes(opts.createChallenge),
+        rp: { name: opts.rpName, id: opts.rpId },
+        user: {
+          id: hexToBytes(opts.userId),
+          name: opts.userName,
+          displayName: opts.userName,
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },   // ES256
+          { type: 'public-key', alg: -257 },  // RS256
+        ],
+        authenticatorSelection: {
+          residentKey: 'preferred',
+          userVerification: 'preferred',
+        },
+        extensions: {
+          prf: {},
+        },
+      },
+    });
+
+    const createExt = credential.getClientExtensionResults();
+    const credentialId = bytesToHex(credential.rawId);
+
+    // Check if authenticator reported PRF support
+    const prfEnabled = createExt.prf && createExt.prf.enabled;
+
+    if (!prfEnabled) {
+      await postJSON('/api/enroll-result', {
+        credentialId,
+        prfOutput: '',
+        error: 'PRF extension not supported by this authenticator',
+      }, csrfToken);
+      status.className = 'error';
+      status.textContent = 'This authenticator does not support PRF. Use Touch ID, Windows Hello, or a phone passkey. For hardware security keys, use the fido2 provider instead.';
+      btn.disabled = false;
+      return;
+    }
+
+    // Step 2: PRF is supported — do an assertion to get the actual PRF output.
+    status.textContent = 'PRF supported — touch your key again to derive secret...';
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: hexToBytes(opts.assertChallenge),
+        rpId: opts.rpId,
+        allowCredentials: [{
+          type: 'public-key',
+          id: hexToBytes(credentialId),
+        }],
+        userVerification: 'preferred',
+        extensions: {
+          prf: {
+            eval: {
+              first: hexToBytes(opts.prfSalt),
+            },
+          },
+        },
+      },
+    });
+
+    const getExt = assertion.getClientExtensionResults();
+
+    const prfResult = getExt.prf && getExt.prf.results && getExt.prf.results.first;
+    if (!prfResult) {
+      await postJSON('/api/enroll-result', {
+        credentialId,
+        prfOutput: '',
+        error: 'PRF assertion returned no output',
+      }, csrfToken);
+      status.className = 'error';
+      status.textContent = 'PRF assertion failed — no output returned.';
+      btn.disabled = false;
+      return;
+    }
+
+    const prfOutput = bytesToHex(prfResult);
+
+    await postJSON('/api/enroll-result', { credentialId, prfOutput }, csrfToken);
+
+    status.className = 'success';
+    status.textContent = 'Passkey enrolled — you can close this tab.';
+    btn.disabled = true;
+
+  } catch (e) {
+    status.className = 'error';
+    status.textContent = e.message || 'Enrollment failed';
+    await postJSON('/api/enroll-result', { error: e.message || 'unknown error' }, csrfToken);
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
