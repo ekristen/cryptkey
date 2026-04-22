@@ -4,20 +4,20 @@ Every cryptkey release ships three things for each supported platform:
 
 - The binary archive (`cryptkey-vX.Y.Z-<os>-<arch>.tar.gz`)
 - A CycloneDX JSON SBOM (`cryptkey-vX.Y.Z-<os>-<arch>.tar.gz.sbom.json`)
-- A checksums file (`checksums.txt`) covering every archive and SBOM, signed via cosign (`checksums.txt.sig` + `checksums.txt.pem`)
+- A checksums file (`checksums.txt`) covering every archive and SBOM, signed via cosign (Sigstore bundle at `checksums.txt.sigstore`)
 
 The release is produced by [.github/workflows/build.yml](https://github.com/ekristen/cryptkey/blob/master/.github/workflows/build.yml) on tag push. No long-lived signing keys are used — cosign keyless signing via GitHub Actions OIDC (Fulcio + Rekor) anchors trust to the workflow identity.
 
 ## Verifying a release
 
-You need [cosign](https://github.com/sigstore/cosign) installed. Distillery installs it for you; if you downloaded a binary manually, `brew install cosign` / the [official installer](https://docs.sigstore.dev/system_config/installation/) work.
+You need [cosign](https://github.com/sigstore/cosign) 2.2 or newer installed. Distillery installs it for you; if you downloaded a binary manually, `brew install cosign` / the [official installer](https://docs.sigstore.dev/system_config/installation/) work.
 
 ### 1. Verify the checksums file
 
 ```bash
 cosign verify-blob \
-  --certificate=checksums.txt.pem \
-  --signature=checksums.txt.sig \
+  --bundle=checksums.txt.sigstore \
+  --new-bundle-format \
   --certificate-identity-regexp='^https://github.com/ekristen/cryptkey/\.github/workflows/build\.yml' \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
   checksums.txt
