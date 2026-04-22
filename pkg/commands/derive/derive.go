@@ -546,6 +546,21 @@ func findChildArgs() []string {
 	return nil
 }
 
+// profileNameArg returns the optional profile-name positional argument,
+// excluding anything passed after "--" as the child command. urfave/cli/v3
+// folds post-"--" tokens into cmd.Args(), so a bare cmd.Args().First() would
+// treat e.g. `derive -- sudo veracrypt …` as a profile named "sudo".
+func profileNameArg(cmd *cli.Command) string {
+	args := cmd.Args().Slice()
+	if n := len(findChildArgs()); n > 0 && len(args) >= n {
+		args = args[:len(args)-n]
+	}
+	if len(args) == 0 {
+		return ""
+	}
+	return args[0]
+}
+
 // outputFormat holds the resolved set of mutually exclusive output flags.
 type outputFormat struct {
 	raw, b64, age, ageRecipient, ed25519 bool
@@ -696,7 +711,7 @@ func emitRawKey(ctx context.Context, cmd *cli.Command, key []byte, raw, b64 bool
 }
 
 func Execute(ctx context.Context, cmd *cli.Command) error {
-	profileName := cmd.Args().First()
+	profileName := profileNameArg(cmd)
 	if profileName == "" {
 		profileName = config.DefaultProfile
 	}
