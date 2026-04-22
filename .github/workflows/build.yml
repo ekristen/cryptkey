@@ -244,6 +244,7 @@ jobs:
           cosign sign-blob \
             --yes \
             --oidc-provider=github \
+            --new-bundle-format=false \
             --output-signature=release/checksums.txt.sig \
             --output-certificate=release/checksums.txt.pem \
             release/checksums.txt
