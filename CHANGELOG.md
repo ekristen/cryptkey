@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ekristen/cryptkey/compare/v0.1.2...v0.1.3) (2026-04-22)
+
+
+### Bug Fixes
+
+* **workflow:** cosign configuration bundle ([cef2ee5](https://github.com/ekristen/cryptkey/commit/cef2ee572224e5de7385fc0106f03c8383e57400))
+
 ## [0.1.2](https://github.com/ekristen/cryptkey/compare/v0.1.1...v0.1.2) (2026-04-22)
 
 
