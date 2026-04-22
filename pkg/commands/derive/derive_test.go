@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
 
@@ -61,7 +62,7 @@ func TestProfileNameArg_StripsChildArgs(t *testing.T) {
 			}
 
 			err := cmd.Run(context.Background(), tt.osArgs[1:])
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
