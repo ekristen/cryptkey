@@ -56,10 +56,29 @@ func TestSubstitute(t *testing.T) {
 		assert.Equal(t, []string{"/dev/fd/3", "and", "/dev/fd/4"}, got)
 	})
 
+	t.Run("keyN spelling is equivalent to N", func(t *testing.T) {
+		got, err := substitute([]string{"--primary={key1}", "--secondary={key2}"}, paths)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"--primary=/dev/fd/3", "--secondary=/dev/fd/4"}, got)
+	})
+
+	t.Run("both spellings can be mixed", func(t *testing.T) {
+		got, err := substitute([]string{"{key1}:{2}"}, paths)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"/dev/fd/3:/dev/fd/4"}, got)
+	})
+
 	t.Run("out of range index is an error", func(t *testing.T) {
 		_, err := substitute([]string{"--keyfiles={1},{3}"}, paths)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "{3}")
+		assert.Contains(t, err.Error(), "only 2 key(s)")
+	})
+
+	t.Run("out of range keyN is an error", func(t *testing.T) {
+		_, err := substitute([]string{"--keyfiles={key3}"}, paths)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "{key3}")
 		assert.Contains(t, err.Error(), "only 2 key(s)")
 	})
 

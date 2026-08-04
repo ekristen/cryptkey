@@ -42,8 +42,10 @@ import (
 // so the numbering is assigned rather than discovered.
 const firstChildFD = 3
 
-// indexPlaceholder matches a positional {N} placeholder in the child argv.
-var indexPlaceholder = regexp.MustCompile(`\{(\d+)\}`)
+// indexPlaceholder matches a positional placeholder in the child argv, in
+// either the bare {N} or the more readable {keyN} spelling. Used after
+// substitution to catch indices that name a key which was never provided.
+var indexPlaceholder = regexp.MustCompile(`\{(?:key)?\d+\}`)
 
 // keySpec is one --key argument: the profile to unlock and the --use label to
 // derive under.
@@ -174,8 +176,14 @@ func fdPath(n int) string {
 	return "/dev/fd/" + strconv.Itoa(n)
 }
 
-// substitute expands {keys} (all paths, comma-joined, in --key order) and
-// {1}..{N} (individual paths) within each element of the child argv.
+// substitute expands placeholders within each element of the child argv:
+//
+//	{keys}            every path, comma-joined, in --key order
+//	{1} .. {N}        one path, by position
+//	{key1} .. {keyN}  the same, spelled out
+//
+// Positional placeholders are 1-based and follow --key order, so {key1} is
+// always the first --key regardless of which descriptor it landed on.
 func substitute(argv, paths []string) ([]string, error) {
 	joined := strings.Join(paths, ",")
 	out := make([]string, len(argv))
@@ -183,15 +191,17 @@ func substitute(argv, paths []string) ([]string, error) {
 	for i, arg := range argv {
 		expanded := strings.ReplaceAll(arg, "{keys}", joined)
 		for j, p := range paths {
-			expanded = strings.ReplaceAll(expanded, "{"+strconv.Itoa(j+1)+"}", p)
+			n := strconv.Itoa(j + 1)
+			expanded = strings.ReplaceAll(expanded, "{key"+n+"}", p)
+			expanded = strings.ReplaceAll(expanded, "{"+n+"}", p)
 		}
-		// Any {N} still present names a key that wasn't provided. Failing
-		// here beats handing the child a literal "{3}" and watching it
-		// report a confusing keyfile error.
-		if m := indexPlaceholder.FindStringSubmatch(expanded); m != nil {
+		// Any positional placeholder still present names a key that wasn't
+		// provided. Failing here beats handing the child a literal "{3}"
+		// and watching it report a confusing keyfile error.
+		if m := indexPlaceholder.FindString(expanded); m != "" {
 			return nil, fmt.Errorf(
 				"placeholder %s in argument %q: only %d key(s) were provided",
-				m[0], arg, len(paths))
+				m, arg, len(paths))
 		}
 		out[i] = expanded
 	}
@@ -292,15 +302,20 @@ func init() {
 		Name:  "with-keys",
 		Usage: "Expose derived keys as file descriptors and exec a command that reads them by path",
 		Description: "Materializes one derived key per --key as an inherited file descriptor " +
-			"(/dev/fd/3, /dev/fd/4, ...) and runs the command after --, substituting {keys} " +
-			"for the comma-joined paths and {1}..{N} for individual ones.\n\n" +
+			"(/dev/fd/3, /dev/fd/4, ...) and runs the command after --.\n\n" +
+			"Placeholders expanded in the child command:\n" +
+			"  {keys}            every path, comma-joined, in --key order\n" +
+			"  {1}, {2}, ...     one path, by position\n" +
+			"  {key1}, {key2}    the same, spelled out\n\n" +
 			"The keys exist only in kernel pipe buffers for the lifetime of the child " +
 			"process; nothing is written to any filesystem and no cleanup step can be " +
 			"missed. Each descriptor is readable exactly once, to EOF.\n\n" +
-			"Example:\n" +
+			"Examples:\n" +
 			"  cryptkey with-keys --key vault:disk --key backup:disk -- \\\n" +
 			"    veracrypt -t --keyfiles={keys} --password=\"\" --pim=0 \\\n" +
-			"    --non-interactive /path/to/volume /mnt/vault",
+			"    --non-interactive /path/to/volume /mnt/vault\n\n" +
+			"  cryptkey with-keys --key vault:disk --key backup:disk -- \\\n" +
+			"    some-tool --primary-key={key1} --secondary-key={key2}",
 		ArgsUsage: "-- <command> [args...]",
 		Flags: []cli.Flag{
 			&cli.StringSliceFlag{
