@@ -15,6 +15,7 @@ import (
 	_ "github.com/ekristen/cryptkey/pkg/commands/init"
 	_ "github.com/ekristen/cryptkey/pkg/commands/list"
 	_ "github.com/ekristen/cryptkey/pkg/commands/rekey"
+	_ "github.com/ekristen/cryptkey/pkg/commands/withkeys"
 
 	_ "github.com/ekristen/cryptkey/pkg/provider/fido2"
 	_ "github.com/ekristen/cryptkey/pkg/provider/passkey"

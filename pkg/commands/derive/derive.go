@@ -133,12 +133,23 @@ func Reconstruct(ctx context.Context, profileName string, opts ...ReconstructOpt
 	}
 	defer res.Wipe()
 
+	return OutputKeyFor(res, o.Use)
+}
+
+// OutputKeyFor derives the profile's output key for a single --use label from
+// an already-reconstructed master key. The caller owns the returned slice and
+// must wipe it.
+//
+// Exposed so commands that unlock a profile once but need several
+// purpose-specific keys from it (with-keys) don't duplicate the HKDF
+// construction.
+func OutputKeyFor(res *MasterKeyResult, use string) ([]byte, error) {
 	// The HKDF info string intentionally omits the profile name so that
 	// renaming a profile file (which we don't enforce or pin) doesn't
 	// change the derived output key. Domain separation across distinct
 	// profiles is provided by the per-profile OutputSalt.
 	outputSalt, _ := hex.DecodeString(res.Profile.OutputSalt)
-	info := hkdfinfo.OutputKeyPrefix + o.Use
+	info := hkdfinfo.OutputKeyPrefix + use
 	outputKey, err := crypto.DeriveOutputKey(res.MasterKey, outputSalt, info, outputKeyLen)
 	if err != nil {
 		return nil, fmt.Errorf("derive output key: %w", err)
